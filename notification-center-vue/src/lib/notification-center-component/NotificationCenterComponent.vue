@@ -1,188 +1,158 @@
-<script lang="ts">
-import { css } from '@emotion/css';
+<script setup lang="ts">
+import { ref, useSlots, computed, onMounted } from "vue";
+import { css } from "@emotion/css";
 import {
   getStyleByPath,
   getDefaultTheme,
   getDefaultBellColors,
   NotificationCenterContentWebComponent,
-} from '@novu/notification-center';
-import BellButton from './BellButton.vue';
+} from "@novu/notification-center";
+import BellButton from "./BellButton.vue";
+import type { NotificationCenterContentComponentProps } from "@novu/notification-center";
 
-customElements.define('notification-center-content-component', NotificationCenterContentWebComponent);
-
-export default {
-  components: {
-    BellButton,
-  },
-  data() {
-    const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-      this.calculateStyles({ theme: this.theme, styles: this.styles, colorScheme: this.colorScheme });
-
-    return {
-      popoverArrowClass,
-      popoverDropdownClass,
-      bellButtonClass,
-      gradientDotClass,
-      bellColors,
-      unseenCount: undefined as number | undefined,
-      hasSlot: !!this.$slots.default,
-    };
-  },
-  watch: {
-    theme: {
-      handler(val) {
-        const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-          this.calculateStyles({ theme: val, styles: this.styles, colorScheme: this.colorScheme });
-        this.popoverArrowClass = popoverArrowClass;
-        this.popoverDropdownClass = popoverDropdownClass;
-        this.bellButtonClass = bellButtonClass;
-        this.gradientDotClass = gradientDotClass;
-        this.bellColors = bellColors;
-      },
-      deep: true,
-    },
-    styles: {
-      handler(val) {
-        const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-          this.calculateStyles({ theme: this.theme, styles: val, colorScheme: this.colorScheme });
-        this.popoverArrowClass = popoverArrowClass;
-        this.popoverDropdownClass = popoverDropdownClass;
-        this.bellButtonClass = bellButtonClass;
-        this.gradientDotClass = gradientDotClass;
-        this.bellColors = bellColors;
-      },
-      deep: true,
-    },
-    colorScheme: {
-      handler(val) {
-        const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-          this.calculateStyles({ theme: this.theme, styles: this.styles, colorScheme: val });
-        this.popoverArrowClass = popoverArrowClass;
-        this.popoverDropdownClass = popoverDropdownClass;
-        this.bellButtonClass = bellButtonClass;
-        this.gradientDotClass = gradientDotClass;
-        this.bellColors = bellColors;
-      },
-    },
-  },
-  mounted() {
-    const arrowsContainer = (this.$refs.popover as any).$refs.popper.$_arrowNode as HTMLDivElement;
-    arrowsContainer.childNodes.forEach((node) => {
-      (node as HTMLDivElement).classList.add(this.popoverArrowClass);
-    });
-
-    // listen to the unseen count changed event propagated from the web component
-    document.addEventListener('novu:unseen_count_changed', (event) => {
-      this.unseenCount = (event as CustomEvent).detail as number;
-    });
-  },
-  methods: {
-    calculateStyles: ({
-      styles,
-      theme: propsTheme,
-      colorScheme,
-    }: Pick<NotificationCenterComponentProps, 'theme' | 'styles' | 'colorScheme'>) => {
-      const { theme, common } = getDefaultTheme({ colorScheme, theme: propsTheme });
-      const { bellColors } = getDefaultBellColors({
-        colorScheme,
-        bellColors: {},
-      });
-
-      return {
-        popoverArrowClass: css(
-          getStyleByPath({
-            styles,
-            path: 'popover.arrow',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        popoverDropdownClass: css(
-          getStyleByPath({
-            styles,
-            path: 'popover.dropdown',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        bellButtonClass: css(
-          getStyleByPath({
-            styles,
-            path: 'bellButton.root',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        gradientDotClass: css(
-          getStyleByPath({
-            styles,
-            path: 'bellButton.dot',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        bellColors,
-      };
-    },
-  },
-};
-</script>
-
-<script setup lang="ts">
-import type { NotificationCenterContentComponentProps } from '@novu/notification-center';
-
-export type FloatingPlacement = 'end' | 'start';
-export type FloatingSide = 'top' | 'right' | 'bottom' | 'left' | 'auto';
-export type FloatingPosition = FloatingSide | `${FloatingSide}-${FloatingPlacement}`;
+export type FloatingPlacement = "end" | "start";
+export type FloatingSide = "top" | "right" | "bottom" | "left" | "auto";
+export type FloatingPosition =
+  | FloatingSide
+  | `${FloatingSide}-${FloatingPlacement}`;
 export interface NotificationCenterComponentProps {
-  backendUrl?: NotificationCenterContentComponentProps['backendUrl'];
-  socketUrl?: NotificationCenterContentComponentProps['socketUrl'];
-  subscriberId?: NotificationCenterContentComponentProps['subscriberId'];
-  applicationIdentifier: NotificationCenterContentComponentProps['applicationIdentifier'];
-  subscriberHash?: NotificationCenterContentComponentProps['subscriberHash'];
-  stores?: NotificationCenterContentComponentProps['stores'];
-  tabs?: NotificationCenterContentComponentProps['tabs'];
-  showUserPreferences?: NotificationCenterContentComponentProps['showUserPreferences'];
+  backendUrl?: NotificationCenterContentComponentProps["backendUrl"];
+  socketUrl?: NotificationCenterContentComponentProps["socketUrl"];
+  subscriberId?: NotificationCenterContentComponentProps["subscriberId"];
+  applicationIdentifier: NotificationCenterContentComponentProps["applicationIdentifier"];
+  subscriberHash?: NotificationCenterContentComponentProps["subscriberHash"];
+  stores?: NotificationCenterContentComponentProps["stores"];
+  tabs?: NotificationCenterContentComponentProps["tabs"];
+  showUserPreferences?: NotificationCenterContentComponentProps["showUserPreferences"];
   popover?: {
     offset?: number;
     position?: FloatingPosition;
   };
-  theme?: NotificationCenterContentComponentProps['theme'];
-  styles?: NotificationCenterContentComponentProps['styles'];
-  colorScheme?: NotificationCenterContentComponentProps['colorScheme'];
-  i18n?: NotificationCenterContentComponentProps['i18n'];
-  sessionLoaded?: NotificationCenterContentComponentProps['sessionLoaded'];
-  notificationClicked?: NotificationCenterContentComponentProps['notificationClicked'];
-  unseenCountChanged?: NotificationCenterContentComponentProps['unseenCountChanged'];
-  actionClicked?: NotificationCenterContentComponentProps['actionClicked'];
-  tabClicked?: NotificationCenterContentComponentProps['tabClicked'];
+  theme?: NotificationCenterContentComponentProps["theme"];
+  styles?: NotificationCenterContentComponentProps["styles"];
+  colorScheme?: NotificationCenterContentComponentProps["colorScheme"];
+  i18n?: NotificationCenterContentComponentProps["i18n"];
+  sessionLoaded?: NotificationCenterContentComponentProps["sessionLoaded"];
+  notificationClicked?: NotificationCenterContentComponentProps["notificationClicked"];
+  unseenCountChanged?: NotificationCenterContentComponentProps["unseenCountChanged"];
+  actionClicked?: NotificationCenterContentComponentProps["actionClicked"];
+  tabClicked?: NotificationCenterContentComponentProps["tabClicked"];
 }
 
-withDefaults(defineProps<NotificationCenterComponentProps>(), { colorScheme: 'dark' });
+customElements.define(
+  "notification-center-content-component",
+  NotificationCenterContentWebComponent
+);
+
+const props = withDefaults(defineProps<NotificationCenterComponentProps>(), {
+  colorScheme: "dark",
+});
+
+const slots = useSlots();
+const popper = ref(null);
+
+const unseenCount = ref<number | undefined>(undefined);
+const hasSlot = ref(!!slots.default);
+
+onMounted(() => {
+  const arrowsContainer = (popper.value as any).$_arrowNode as HTMLDivElement;
+  arrowsContainer.childNodes.forEach((node) => {
+    (node as HTMLDivElement).classList.add(popoverArrowClass);
+  });
+
+  // listen to the unseen count changed event propagated from the web component
+  document.addEventListener("novu:unseen_count_changed", (event) => {
+    unseenCount.value = (event as CustomEvent).detail as number;
+  });
+});
+
+const calculateStyles = ({
+  styles,
+  theme: propsTheme,
+  colorScheme,
+}: Pick<
+  NotificationCenterComponentProps,
+  "theme" | "styles" | "colorScheme"
+>) => {
+  const { theme, common } = getDefaultTheme({
+    colorScheme,
+    theme: propsTheme,
+  });
+  const { bellColors } = getDefaultBellColors({
+    colorScheme,
+    bellColors: {},
+  });
+
+  return {
+    popoverArrowClass: css(
+      getStyleByPath({
+        styles,
+        path: "popover.arrow",
+        theme,
+        common,
+        colorScheme,
+      })
+    ),
+    popoverDropdownClass: css(
+      getStyleByPath({
+        styles,
+        path: "popover.dropdown",
+        theme,
+        common,
+        colorScheme,
+      })
+    ),
+    bellButtonClass: css(
+      getStyleByPath({
+        styles,
+        path: "bellButton.root",
+        theme,
+        common,
+        colorScheme,
+      })
+    ),
+    gradientDotClass: css(
+      getStyleByPath({
+        styles,
+        path: "bellButton.dot",
+        theme,
+        common,
+        colorScheme,
+      })
+    ),
+    bellColors,
+  };
+};
+
+const computedStyles = computed(() => {
+  const {
+    popoverArrowClass,
+    popoverDropdownClass,
+    bellButtonClass,
+    gradientDotClass,
+    bellColors,
+  } = calculateStyles({
+    theme: props.theme,
+    styles: props.styles,
+    colorScheme: props.colorScheme,
+  });
+  return {
+    popoverArrowClass,
+    popoverDropdownClass,
+    bellButtonClass,
+    gradientDotClass,
+    bellColors,
+  };
+});
+
+const {
+  popoverArrowClass,
+  popoverDropdownClass,
+  bellButtonClass,
+  gradientDotClass,
+  bellColors,
+} = computedStyles.value;
 </script>
-
-<style>
-.v-popper--theme-light .v-popper__inner,
-.v-popper--theme-dark .v-popper__inner {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.v-popper--theme-light .v-popper__arrow-outer,
-.v-popper--theme-light .v-popper__arrow-inner {
-  border-color: #fff;
-}
-
-.v-popper--theme-dark .v-popper__arrow-outer,
-.v-popper--theme-dark .v-popper__arrow-inner {
-  border-color: #1e1e26;
-}
-</style>
 
 <template>
   <VDropdown
@@ -190,7 +160,6 @@ withDefaults(defineProps<NotificationCenterComponentProps>(), { colorScheme: 'da
     :popperClass="popoverDropdownClass"
     :placement="popover?.position"
     :distance="popover?.offset"
-    ref="popover"
   >
     <!-- Popover target - usually button -->
     <slot v-if="hasSlot" v-bind="unseenCount" :unseen-count="unseenCount" />
@@ -205,6 +174,7 @@ withDefaults(defineProps<NotificationCenterComponentProps>(), { colorScheme: 'da
     <!-- Popover content -->
     <template #popper>
       <notification-center-content-component
+        ref="popper"
         :backendUrl="backendUrl"
         :socketUrl="socketUrl"
         :subscriberId="subscriberId"
@@ -226,3 +196,22 @@ withDefaults(defineProps<NotificationCenterComponentProps>(), { colorScheme: 'da
     </template>
   </VDropdown>
 </template>
+
+<style scoped>
+.v-popper--theme-light .v-popper__inner,
+.v-popper--theme-dark .v-popper__inner {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.v-popper--theme-light .v-popper__arrow-outer,
+.v-popper--theme-light .v-popper__arrow-inner {
+  border-color: #fff;
+}
+
+.v-popper--theme-dark .v-popper__arrow-outer,
+.v-popper--theme-dark .v-popper__arrow-inner {
+  border-color: #1e1e26;
+}
+</style>
