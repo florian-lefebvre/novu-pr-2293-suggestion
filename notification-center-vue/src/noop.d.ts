@@ -6,7 +6,7 @@
  * During the development types will be any, but after the build they will be correct.
  * GH issue: https://github.com/vuejs/core/issues/1033
  */
-declare module '@novu/notification-center' {
+declare module "@novu/notification-center" {
   export const colors: any;
   export const getStyleByPath: any;
   export const getDefaultTheme: any;
